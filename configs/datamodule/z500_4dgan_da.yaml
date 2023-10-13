@@ -1,0 +1,15 @@
+_target_: src.datamodules.z500_4dgan_datamodule.Z5004DDataModule
+data_dir: ${paths.data_dir}
+xb_dir: ${paths.xb_dir}
+obs_dir: ${paths.obs_dir} 
+obs_partial_mask_dir: ${paths.obs_partial_mask_dir} 
+init_time: -120
+batch_size: 128
+num_workers: 8
+pin_memory: true
+prefetch_factor: 4
+partial: 0.5
+single_obs: false
+random_erase: true
+obserr: 0.5
+pred_len: 1

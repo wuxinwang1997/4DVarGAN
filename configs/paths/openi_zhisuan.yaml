@@ -1,0 +1,22 @@
+# path to root directory
+# this requires PROJECT_ROOT environment variable to exist
+# PROJECT_ROOT is inferred and set by pyrootutils package in `train.py` and `eval.py`
+root_dir: ${oc.env:PROJECT_ROOT}
+
+# path to data directory
+data_dir: /tmp/dataset/data/data
+xb_dir: /tmp/dataset/da_data/da_data/background
+obs_dir: /tmp/dataset/da_data/da_data/observation
+obs_partial_mask_dir: /tmp/dataset/da_data/da_data/observation_mask
+pretrain_dir: /tmp/dataset/pred_model
+
+# path to logging directory
+log_dir: /tmp/output
+
+# path to output directory, created dynamically by hydra
+# path generation pattern is specified in `configs/hydra/default.yaml`
+# use it to store all files generated during the run, like ckpts and metrics
+output_dir: /tmp/output
+
+# path to working directory
+work_dir: ${hydra:runtime.cwd}

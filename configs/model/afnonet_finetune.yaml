@@ -1,0 +1,51 @@
+_target_: src.models.prednn_module.PredNNLitModule
+
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 0.021
+  betas: [0.9, 0.95]
+  weight_decay: 0.0
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  _partial_: true
+  T_max: 55
+  verbose: true
+
+after_scheduler: null
+  # _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  # _partial_: true
+  # T_max: 55
+  # verbose: true
+  # _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  # _partial_: true
+  # mode: min
+  # factor: 0.1
+  # patience: 5 
+
+net:
+  _target_: src.models.components.afnonet.AFNONet
+  fno_blocks: 4 
+  fno_bias: true 
+  fno_softshrink: 0.01
+  double_skip: true
+  checkpoint_activations: false 
+  img_size: [32, 64]
+  patch_size: 4
+  in_chans: 1
+  out_chans: 1
+  embed_dim: 64
+  depth: 12
+  mlp_ratio: 4.
+  uniform_drop: false 
+  drop_rate: 0.
+  drop_path_rate: 0.
+  norm_layer:
+    _target_: torch.nn.LayerNorm
+    _partial_: true
+    eps: 1e-6
+  dropcls: 0
+
+loss: null
+  #_target_: src.utils.tools.WeightedMSELoss

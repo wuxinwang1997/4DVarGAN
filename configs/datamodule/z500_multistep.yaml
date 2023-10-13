@@ -1,0 +1,9 @@
+_target_: src.datamodules.z500_datamodule.Z500DataModule
+data_dir: ${paths.data_dir}
+batch_size: 256
+num_workers: 8
+pin_memory: true
+prefetch_factor: 4
+lead_time: 6
+multistep: true
+num_step: 2

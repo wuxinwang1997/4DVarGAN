@@ -1,0 +1,30 @@
+_target_: src.models.map_module.MapLitModule
+
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 5e-4
+
+scheduler:
+  _target_: src.utils.tools.GradualWarmupScheduler
+  _partial_: true
+  multiplier: 1
+  total_epoch: 5
+
+after_scheduler:
+  _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  _partial_: true
+  T_max: 45
+  verbose: true
+
+net:
+  _target_: src.models.components.lstm.LSTM
+  in_features: 4096
+  hidden_features: 2048
+  num_layers: 1
+  out_features: 2048
+
+loss: null
+eval_loss:
+  _target_: src.utils.tools.WeightedMSELoss
+  data_dir: ${paths.data_dir}

@@ -1,0 +1,8 @@
+_target_: src.datamodules.forecast.ncdatamodule.ForecastDataModule
+era5_dir: ${paths.era5_dir}
+var: "geopotential_500" 
+seed: 1024
+batch_size: 512
+num_workers: 2
+pin_memory: true
+prefetch_factor: 4

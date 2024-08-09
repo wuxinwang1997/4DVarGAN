@@ -1,0 +1,15 @@
+_target_: src.datamodules.assimilate.ncdatamodule.AssimDataModule
+var: "geopotential_500"
+era5_dir: ${paths.era5_dir}
+background_dir: ${paths.background_dir}
+obs_dir: ${paths.obs_dir}
+obs_mask_dir: ${paths.obs_mask_dir}
+init_time: -72
+obs_partial: 0.2
+seed: 1024
+batch_size: 512
+num_workers: 1
+pin_memory: false 
+prefetch_factor: 2
+pred_len: 0
+random_erase: true

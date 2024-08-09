@@ -1,0 +1,41 @@
+_target_: src.models.assimilate.regressive_assim_module.AssimilateLitModule
+
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 0.005754399373371567
+  # betas: [0.5, 0.999]
+
+scheduler:
+  _target_: src.utils.train_utils.GradualWarmupScheduler
+  _partial_: true
+  multiplier: 1
+  total_epoch: 5
+
+after_scheduler:
+  _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  _partial_: true
+  T_max: 45
+  eta_min: 1e-8
+  verbose: True
+
+net:
+  _target_: src.models.assimilate.vit.arch.ViT
+  img_size: [32, 64]
+  in_chans: 2
+  out_chans: 1
+  patch_size: 4
+  embed_dim: 64
+  depth: 12
+  num_heads: 8
+  mlp_ratio: 4.0
+  drop_rate: 0.2
+
+mean_path: ${paths.era5_dir}/normalize_mean.npy
+std_path: ${paths.era5_dir}/normalize_std.npy
+clim_paths:
+  - ${paths.era5_dir}/train/climatology.npy
+  - ${paths.era5_dir}/val/climatology.npy
+  - ${paths.era5_dir}/test/climatology.npy
+loss:
+  _target_: torch.nn.L1Loss

@@ -1,0 +1,81 @@
+_target_: src.models.assimilate.fdvargan_assim_module.AssimilateLitModule
+
+g_A2B:
+  _target_: src.models.assimilate.fdvargan.genDA_unet.Solver_Grad_4DVarGAN
+  phi_r:
+    _target_: src.models.forecast.afnonet.arch.AFNONet
+    img_size: [32, 64]
+    patch_size: 4
+    embed_dim: 64
+    depth: 12
+    num_blocks: 8
+    mlp_ratio: 4.0
+    drop_path: 0.2
+    drop_rate: 0.
+    double_skip: true
+    sparsity_threshold: 0.01
+    hard_thresholding_fraction: 1.0
+  mod_H:
+    _target_: src.models.assimilate.fdvargan.genDA_unet.Model_H
+    shape_data: [2, 1]
+  m_Grad:
+    _target_: src.models.assimilate.fdvargan.genDA_unet.UNet
+    in_channels: 5
+    hidden_channels: 32
+    out_channels: 1
+    num_downsampling: 2
+    num_resnet_blocks: 4
+    init_type: 'normal'
+    init_gain: 0.02
+  shape_data: [1, 32, 64]
+  adaptive: true
+
+d_B:
+  _target_: src.models.assimilate.fdvargan.patch_discriminator.PatchDiscriminator
+  in_channels: 4
+  hidden_channels: 32
+  num_layers: 3
+  init_type: normal
+  init_gain: 0.02
+
+g_optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 5e-4
+  betas: [0.5, 0.999]
+
+d_optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 2.5e-3
+  betas: [0.5, 0.999]
+
+scheduler:
+  _target_: src.utils.train_utils.GradualWarmupScheduler
+  _partial_: true
+  multiplier: 1
+  total_epoch: 5
+
+after_scheduler:
+  _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  _partial_: true
+  T_max: 45
+  eta_min: 1e-8
+  verbose: True
+
+mean_path: ${paths.era5_dir}/normalize_mean.npy
+std_path: ${paths.era5_dir}/normalize_std.npy
+clim_paths:
+  - ${paths.era5_dir}/train/climatology.npy
+  - ${paths.era5_dir}/val/climatology.npy
+  - ${paths.era5_dir}/test/climatology.npy
+
+loss:
+  _target_: src.utils.train_utils.GANLoss
+  loss_type: MSE
+  rec_loss:
+    _target_: torch.nn.L1Loss
+  lambda_rec: 100
+  lambda_adv: 1
+
+pred_ckpt: ${paths.ckpt_dir}/afnonet_z500_0714.ckpt

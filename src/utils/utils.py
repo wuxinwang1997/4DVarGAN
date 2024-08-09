@@ -3,14 +3,17 @@ import warnings
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Callable, Dict, List
-import argparse
+
 import hydra
 from omegaconf import DictConfig
 from pytorch_lightning import Callback
 from pytorch_lightning.loggers import LightningLoggerBase
 from pytorch_lightning.utilities import rank_zero_only
-
+import argparse
 from src.utils import pylogger, rich_utils
+
+from contextlib import closing
+import socket
 
 log = pylogger.get_pylogger(__name__)
 
@@ -84,7 +87,7 @@ def extras(cfg: DictConfig) -> None:
 
 
 @rank_zero_only
-def save_file(path: str, content: str) -> None:
+def save_file(path, content) -> None:
     """Save file in rank zero mode (only on one process in multi-GPU setup)."""
     with open(path, "w+") as file:
         file.write(content)
@@ -129,7 +132,7 @@ def instantiate_loggers(logger_cfg: DictConfig) -> List[LightningLoggerBase]:
 
 
 @rank_zero_only
-def log_hyperparameters(object_dict: dict) -> None:
+def log_hyperparameters(object_dict: Dict[str, Any]) -> None:
     """Controls which config parts are saved by lightning loggers.
 
     Additionally saves:
@@ -203,7 +206,7 @@ def close_loggers() -> None:
         if wandb.run:
             log.info("Closing wandb!")
             wandb.finish()
-            
+
 def str2bool(v):
     if isinstance(v, bool):
         return v
@@ -213,3 +216,48 @@ def str2bool(v):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
+
+def get_open_port():
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]
+
+def isInuse(ipList, port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    flag=True
+    for ip in ipList:
+        try:
+            s.connect((ip, int(port)))
+            s.shutdown(2)
+            print('%d is inuse' % port)
+            flag=True
+            break
+        except:
+            print('%d is free' % port)
+            flag=False
+    return flag
+
+def getLocalIp():
+    localIP = socket.gethostbyname(socket.gethostname())
+    return localIP
+
+def checkNinePort(startPort):
+    flag = True
+    ipList = ("127.0.0.1","0.0.0.0",getLocalIp())
+    for i in range(1, 16):
+        if (isInuse(ipList, startPort)):
+            flag = False
+            break
+        else:
+            startPort = startPort + 1
+    return flag, startPort
+
+def find_free_ports(startPort):
+    while True:
+        flag, endPort = checkNinePort(startPort)
+        if (flag == True):  #ninePort is ok
+            break
+        else:
+            startPort = endPort + 1
+    return startPort

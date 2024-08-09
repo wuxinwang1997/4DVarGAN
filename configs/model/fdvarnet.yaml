@@ -1,12 +1,13 @@
-_target_: src.models.fdvarnet_module.FDVarNetLitModule
+_target_: src.models.assimilate.fdvarnet_assim_module.AssimilateLitModule
 
 optimizer:
   _target_: torch.optim.Adam
   _partial_: true
-  lr: 5e-4
+  lr: 0.07585775750291836
+  # betas: [0.5, 0.999]
 
 scheduler:
-  _target_: src.utils.tools.GradualWarmupScheduler
+  _target_: src.utils.train_utils.GradualWarmupScheduler
   _partial_: true
   multiplier: 1
   total_epoch: 5
@@ -15,37 +16,46 @@ after_scheduler:
   _target_: torch.optim.lr_scheduler.CosineAnnealingLR
   _partial_: true
   T_max: 45
-  verbose: true
+  eta_min: 1e-8
+  verbose: True
 
 net:
-  _target_: src.models.components.fdvarnet.Model_4DVarNN_GradFP
-  mod_AE:
-    _target_: src.models.components.nv_fourcastnet.FourCastNet
+  _target_: src.models.assimilate.fdvarnet.arch.Solver_Grad_4DVarNN
+  phi_r:
+    _target_: src.models.forecast.afnonet.arch.AFNONet
     img_size: [32, 64]
-    patch_size: [4, 4]
-    in_chans: 1
-    out_chans: 1
+    patch_size: 4
     embed_dim: 64
     depth: 12
-    mlp_ratio: 4.
-    drop_rate: 0.
-    drop_path_rate: 0.
-    double_skip: true
     num_blocks: 8
+    mlp_ratio: 4.0
+    drop_path: 0.2
+    drop_rate: 0.
+    double_skip: true
     sparsity_threshold: 0.01
     hard_thresholding_fraction: 1.0
-  ShapeData: [1, 32, 64]
-  NiterProjection: 0
-  NiterGrad: 5
-  GradType: 1
-  OptimType: 2
-  InterpFlag: False
-  periodicBnd: False
+  mod_H:
+    _target_: src.models.assimilate.fdvarnet.arch.Model_H
+    shape_data: [3, 1]
+  m_Grad:
+    _target_: src.models.assimilate.fdvarnet.arch.model_GradUpdateLSTM
+    ShapeData: [1, 32, 64]
+    periodicBnd: false
+    DimLSTM: 0
+    rateDropout: 0.
+    stochastic: false
+  m_NormObs: l2
+  m_NormPhi: l2
+  shape_data: [1, 32, 64]
+  n_iter_grad: 10
+  stochastic: false
 
-loss: null
-eval_loss:
-  _target_: src.utils.tools.WeightedMSELoss
-  data_dir: ${paths.data_dir}
-
-alpha: [1.0, 10]
-ckpt: ${paths.pretrain_dir}/fourcastnet_5.625deg_leadtime6h.ckpt
+mean_path: ${paths.era5_dir}/normalize_mean.npy
+std_path: ${paths.era5_dir}/normalize_std.npy
+clim_paths:
+  - ${paths.era5_dir}/train/climatology.npy
+  - ${paths.era5_dir}/val/climatology.npy
+  - ${paths.era5_dir}/test/climatology.npy
+loss:
+  _target_: torch.nn.L1Loss
+pred_ckpt: ${paths.ckpt_dir}/afnonet_z500_0714.ckpt
